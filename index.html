@@ -254,11 +254,78 @@ header{backdrop-filter:blur(12px)}
 .btn-copy-code:hover {
   color: #a5b4fc !important;
 }
-@media print{
-  body *{visibility:hidden}
-  #notes,#notes *{visibility:visible}
-  #notes{position:absolute;left:0;top:0;width:100%;padding:1rem}
-  .noprint{display:none!important}
+/* Mobile Header Polish */
+@media (max-width: 640px) {
+  header .max-w-7xl {
+    padding-left: 0.65rem;
+    padding-right: 0.65rem;
+    gap: 0.4rem;
+  }
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 3px;
+    flex-wrap: nowrap !important;
+  }
+  .header-actions > * {
+    flex-shrink: 0;
+  }
+  #pomoWidget {
+    padding: 0.25rem 0.5rem;
+  }
+  #pomoWidget #pomoTime {
+    font-size: 0.82rem;
+  }
+}
+
+/* Multi-Page PDF Printing */
+@media print {
+  body > *:not(main) { display: none !important; }
+  header, nav, #targeterBar, #aiDrawer, #aiBackdrop, #floatingAiBtn, #timerModal, #aiSettingsModal, #theatreModal, #concernModal, #adminModal, #libraryModal, .noprint {
+    display: none !important;
+  }
+  body, html {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+  }
+  main, #app, #view {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  #notes {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+    color: #000000 !important;
+  }
+  #notes * {
+    color: #000000 !important;
+    background: transparent !important;
+    border-color: #d1d5db !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+  .ai-notes-container, .ai-msg-bot {
+    background: transparent !important;
+    color: #000000 !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+  @page {
+    margin: 1.5cm;
+    size: auto;
+  }
 }
 </style>
 </head>
@@ -290,7 +357,7 @@ header{backdrop-filter:blur(12px)}
     </a>
 
     <!-- Productivity Controls: Fully Customizable Timer, AI Tutor, Library, Theme, Tickets -->
-    <div class="flex items-center gap-2 flex-wrap">
+    <div class="header-actions flex items-center gap-2 flex-wrap">
       <!-- Fully Customizable Study Timer Widget (Pomodoro + Custom + Stopwatch) -->
       <div id="pomoWidget" class="c-sub px-2.5 py-1.5 flex items-center gap-2 text-xs font-semibold border bd shadow-sm">
         <span class="text-amber-500 cursor-pointer" onclick="openTimerSettings()" title="Timer Settings">⏱</span>
@@ -808,11 +875,19 @@ const $$ = s => document.querySelectorAll(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 /* --------------------------------------------------------------------------
-   1. 3-LAYER 18+ CONTENT FILTER & ACADEMIC INTEGRITY
+   1. 3-LAYER 18+ CONTENT FILTER & ACADEMIC INTEGRITY (WITH ACADEMIC WHITELIST)
    -------------------------------------------------------------------------- */
-const BLOCK = /\b(porn\w*|xxx|nsfw|sex\w*|nude\w*|naked|erotic\w*|hentai|onlyfans|escort\w*|fetish\w*|milf|camgirl\w*|18\+|adult\s*(video|content|site)s?|casino\w*|gambl\w*|betting|bet365|poker|jackpot|lottery|rule34|boobs?|orgy|hookup\w*|incest|rape|gore|dating)\b/i;
-const isAcademic = q => q.trim().length >= 2 && /[a-z0-9]/i.test(q) && !BLOCK.test(q);
-const clean = t => !BLOCK.test(t || '');
+const ACADEMIC_WHITELIST = /\b(sexual\s+reproduction|sexagesimal|sextant|sex[-\s]linked(\s+inheritance)?|bisexual\s+flower|asexual(\s+reproduction)?|homologous(\s+chromosomes)?|homo\s+sapiens|chromosome\s+[xy]|secondary\s+sexual\s+characteristics|meiosis|mitosis|gametogenesis|pollination|fertilization|flowering\s+plants)\b/i;
+const BLOCK = /\b(porn\w*|xxx|nsfw|sex|sexy|sexual\s+assault|sexting|sex\s+tape|sex\s+chat|nude\w*|naked|erotic\w*|hentai|onlyfans|escort\w*|fetish\w*|milf|camgirl\w*|18\+|adult\s*(video|content|site)s?|casino\w*|gambl\w*|betting|bet365|poker|jackpot|lottery|rule34|boobs?|orgy|hookup\w*|incest|rape|gore|dating)\b/i;
+
+function isBlockedContent(text) {
+  if (!text) return false;
+  const sanitized = String(text).replace(ACADEMIC_WHITELIST, '[ACADEMIC_TERM]');
+  return BLOCK.test(sanitized);
+}
+
+const isAcademic = q => q.trim().length >= 2 && /[a-z0-9]/i.test(q) && !isBlockedContent(q);
+const clean = t => !isBlockedContent(t || '');
 
 /* --------------------------------------------------------------------------
    2. CATEGORIES & CORE TABS CONFIGURATION
@@ -1668,7 +1743,7 @@ function submitAIChat() {
   const text = inp.value.trim();
   if (!text || aiGenerating) return;
 
-  if (BLOCK.test(text)) {
+  if (isBlockedContent(text)) {
     showNotification('Academic Guard: Non-academic or prohibited term rejected.');
     aiChatHistory.push({
       role: 'assistant',
@@ -1711,7 +1786,7 @@ function stopAIGeneration() {
   }
 }
 
-/* Streaming SSE Helper over Pollinations OpenAI Endpoint */
+/* Streaming SSE Helper over Pollinations OpenAI Endpoint (Zero SSE Leakage) */
 async function executePollinationsStream(modelName, messages, signal, onChunk) {
   const res = await fetch('https://text.pollinations.ai/openai', {
     method: 'POST',
@@ -1731,41 +1806,32 @@ async function executePollinationsStream(modelName, messages, signal, onChunk) {
   const decoder = new TextDecoder();
   let buffer = '';
 
-  while (true) {
-    const { value, done } = await reader.read();
-    if (done) break;
+  try {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) break;
 
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split('\n');
-    buffer = lines.pop() || '';
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
 
-    for (const line of lines) {
-      const t = line.trim();
-      if (!t || t === 'data: [DONE]') continue;
-      if (t.startsWith('data: ')) {
-        const jsonStr = t.slice(6);
-        try {
-          const p = JSON.parse(jsonStr);
-          const delta = p.choices?.[0]?.delta?.content || '';
-          if (delta) onChunk(delta);
-        } catch (e) {
-          onChunk(jsonStr + '\n');
+      for (const line of lines) {
+        const t = line.trim();
+        if (!t || t === 'data: [DONE]') continue;
+        if (t.startsWith('data:')) {
+          const jsonStr = t.replace(/^data:\s*/, '');
+          try {
+            const p = JSON.parse(jsonStr);
+            const delta = p.choices?.[0]?.delta?.content || '';
+            if (delta) onChunk(delta);
+          } catch (e) {
+            // Discard malformed SSE chunks; never leak raw JSON strings
+          }
         }
-      } else {
-        onChunk(line + '\n');
       }
     }
-  }
-
-  if (buffer.trim() && buffer.trim() !== 'data: [DONE]') {
-    const cleanBuf = buffer.replace(/^data:\s*/, '');
-    try {
-      const p = JSON.parse(cleanBuf);
-      const delta = p.choices?.[0]?.delta?.content || '';
-      if (delta) onChunk(delta);
-    } catch (e) {
-      onChunk(cleanBuf);
-    }
+  } finally {
+    reader.releaseLock();
   }
 }
 
@@ -1782,7 +1848,7 @@ function mergeAbortSignals(signals) {
   return c.signal;
 }
 
-/* Multi-Model Router & RAG Brain Dispatcher */
+/* Multi-Model Router & RAG Brain Dispatcher (Hardened with Clean Fallbacks) */
 async function requestAIResponse(userPrompt) {
   const activeTopic = S.q || 'Academic Engineering & Science';
   const activeSub = S.subTopic || 'Core Foundations';
@@ -1810,26 +1876,6 @@ async function requestAIResponse(userPrompt) {
   activeChatAbortController = new AbortController();
   const signal = activeChatAbortController.signal;
 
-  // 1. Parallel Live Multi-Source RAG Lookup (1.2s bounded)
-  let ragContext = '';
-  try {
-    ragContext = await fetchAcademicRAGContext(`${activeTopic} ${activeSub} ${userPrompt}`, 1200);
-  } catch(e) {}
-
-  // 2. Master Professor System Prompt
-  const systemPrompt = getMasterProfessorPrompt(activeTopic, activeSub, ragContext);
-
-  // 3. Multi-Turn Conversational Memory (last 8 messages)
-  const previousTurns = aiChatHistory.slice(-9, -1);
-  const messagesPayload = [
-    { role: 'system', content: systemPrompt },
-    ...previousTurns.map(m => ({
-      role: m.role === 'user' ? 'user' : 'assistant',
-      content: m.text
-    })),
-    { role: 'user', content: userPrompt }
-  ];
-
   let accumulated = '';
   const onChunk = (chunk) => {
     accumulated += chunk;
@@ -1837,93 +1883,132 @@ async function requestAIResponse(userPrompt) {
     renderAIChat();
   };
 
-  const primaryModel = (aiConfig.modelMode === 'genius') ? 'openai-large' : 'openai-fast';
-  let success = false;
+  let ragContext = '';
 
-  // Level 1: Primary Stream (with 5-second initial token fast-fail timeout)
   try {
-    let gotFirstToken = false;
-    const level1Controller = new AbortController();
-    const subSignal = mergeAbortSignals([signal, level1Controller.signal]);
-    const timeoutId = setTimeout(() => {
-      if (!gotFirstToken) level1Controller.abort();
-    }, 5000);
-
-    if (aiConfig.provider === 'gemini' && aiConfig.apiKey) {
-      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(aiConfig.apiKey)}`;
-      const res = await fetch(geminiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: `${systemPrompt}\n\nStudent Question: ${userPrompt}` }] }]
-        }),
-        signal: subSignal
-      });
-      clearTimeout(timeoutId);
-      const data = await res.json();
-      accumulated = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      success = true;
-    } else if (aiConfig.provider === 'openai' && aiConfig.apiKey) {
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${aiConfig.apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: messagesPayload
-        }),
-        signal: subSignal
-      });
-      clearTimeout(timeoutId);
-      const data = await res.json();
-      accumulated = data?.choices?.[0]?.message?.content || '';
-      success = true;
-    } else {
-      await executePollinationsStream(primaryModel, messagesPayload, subSignal, (chunk) => {
-        gotFirstToken = true;
-        clearTimeout(timeoutId);
-        onChunk(chunk);
-      });
-      clearTimeout(timeoutId);
-      success = true;
-    }
-  } catch (err1) {
-    if (signal.reason === 'user_stop') {
-      aiGenerating = false;
-      return;
-    }
-  }
-
-  // Level 2: Secondary Fallback Waterfall
-  if (!success || !accumulated.trim()) {
+    // 1. Parallel Live Multi-Source RAG Lookup (1.2s bounded)
     try {
-      const secondaryModel = (primaryModel === 'openai-large') ? 'openai-fast' : 'mistral';
-      await executePollinationsStream(secondaryModel, messagesPayload, signal, onChunk);
-      success = true;
-    } catch (err2) {
-      if (signal.reason === 'user_stop') {
-        aiGenerating = false;
-        return;
+      ragContext = await fetchAcademicRAGContext(`${activeTopic} ${activeSub} ${userPrompt}`, 1200);
+    } catch(e) {}
+
+    // 2. Master Professor System Prompt
+    const systemPrompt = getMasterProfessorPrompt(activeTopic, activeSub, ragContext);
+
+    // 3. Multi-Turn Conversational Memory (last 8 messages)
+    const previousTurns = aiChatHistory.slice(-9, -1);
+    const messagesPayload = [
+      { role: 'system', content: systemPrompt },
+      ...previousTurns.map(m => ({
+        role: m.role === 'user' ? 'user' : 'assistant',
+        content: m.text
+      })),
+      { role: 'user', content: userPrompt }
+    ];
+
+    const primaryModel = (aiConfig.modelMode === 'genius') ? 'openai-large' : 'openai-fast';
+    let success = false;
+
+    // Level 1: Primary Stream (with 5-second initial token fast-fail timeout)
+    try {
+      let gotFirstToken = false;
+      const level1Controller = new AbortController();
+      const subSignal = mergeAbortSignals([signal, level1Controller.signal]);
+      const timeoutId = setTimeout(() => {
+        if (!gotFirstToken) level1Controller.abort();
+      }, 5000);
+
+      if (aiConfig.provider === 'gemini' && aiConfig.apiKey) {
+        const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${encodeURIComponent(aiConfig.apiKey)}`;
+        const res = await fetch(geminiUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: `${systemPrompt}\n\nStudent Question: ${userPrompt}` }] }]
+          }),
+          signal: subSignal
+        });
+        clearTimeout(timeoutId);
+        const data = await res.json();
+        accumulated = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        success = true;
+      } else if (aiConfig.provider === 'openai' && aiConfig.apiKey) {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${aiConfig.apiKey}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: messagesPayload
+          }),
+          signal: subSignal
+        });
+        clearTimeout(timeoutId);
+        const data = await res.json();
+        accumulated = data?.choices?.[0]?.message?.content || '';
+        success = true;
+      } else {
+        await executePollinationsStream(primaryModel, messagesPayload, subSignal, (chunk) => {
+          gotFirstToken = true;
+          clearTimeout(timeoutId);
+          onChunk(chunk);
+        });
+        clearTimeout(timeoutId);
+        success = true;
+      }
+    } catch (err1) {
+      if (signal.reason === 'user_stop') return;
+    }
+
+    // Level 2: Secondary Fallback Stream
+    if (!success || !accumulated.trim()) {
+      try {
+        const secondaryModel = (primaryModel === 'openai-large') ? 'openai-fast' : 'mistral';
+        await executePollinationsStream(secondaryModel, messagesPayload, signal, onChunk);
+        success = true;
+      } catch (err2) {
+        if (signal.reason === 'user_stop') return;
       }
     }
-  }
 
-  // Level 3: Final Local Genius Synthesizer (Guaranteed 100% academic depth)
-  if (!success || !accumulated.trim()) {
-    accumulated = generateLocalAcademicTutorResponse(userPrompt, activeTopic, activeSub, ragContext);
-    aiChatHistory[aiChatHistory.length - 1].text = accumulated;
+    // Level 2.5: Clean Direct GET Fallback
+    if (!success || !accumulated.trim()) {
+      try {
+        const cleanGetUrl = `https://text.pollinations.ai/${encodeURIComponent(userPrompt)}?model=openai-fast&seed=42`;
+        const gRes = await fetch(cleanGetUrl, { signal });
+        if (gRes.ok) {
+          const gText = await gRes.text();
+          if (gText && gText.trim() && !gText.includes('<!DOCTYPE') && !gText.includes('<html')) {
+            accumulated = gText.trim();
+            aiChatHistory[aiChatHistory.length - 1].text = accumulated;
+            renderAIChat();
+            success = true;
+          }
+        }
+      } catch (err3) {
+        if (signal.reason === 'user_stop') return;
+      }
+    }
+
+    // Level 3: Final Local Genius Synthesizer (Guaranteed 100% academic depth)
+    if (!success || !accumulated.trim()) {
+      accumulated = generateLocalAcademicTutorResponse(userPrompt, activeTopic, activeSub, ragContext);
+      aiChatHistory[aiChatHistory.length - 1].text = accumulated;
+    }
+  } catch (outerErr) {
+    if (!accumulated.trim()) {
+      accumulated = generateLocalAcademicTutorResponse(userPrompt, activeTopic, activeSub, ragContext);
+      aiChatHistory[aiChatHistory.length - 1].text = accumulated;
+    }
+  } finally {
+    aiGenerating = false;
+    activeChatAbortController = null;
+    if (accumulated.trim()) {
+      AICache.set(cacheKey, accumulated);
+    }
     renderAIChat();
   }
-
-  aiGenerating = false;
-  activeChatAbortController = null;
-
-  if (accumulated.trim()) {
-    AICache.set(cacheKey, accumulated);
-  }
-  renderAIChat();
 }
 
 function generateLocalAcademicTutorResponse(prompt, topic, sub, ragContext = '') {
@@ -2007,6 +2092,52 @@ function stopAINotesGeneration() {
   }
 }
 
+/* Abbreviation-Safe Academic Sentence Splitter (BUG 3 Fix) */
+function splitIntoSentences(text) {
+  if (!text) return [];
+  let t = String(text).replace(/\n+/g, ' ').trim();
+
+  // Abbreviation map covering academic textbooks, scientific papers, and names
+  const abbreviations = [
+    /\be\.g\./gi,
+    /\bi\.e\./gi,
+    /\bvs\./gi,
+    /\bDr\./gi,
+    /\bProf\./gi,
+    /\bFig\./gi,
+    /\bFigs\./gi,
+    /\bEq\./gi,
+    /\bEqs\./gi,
+    /\bapprox\./gi,
+    /\betc\./gi,
+    /\bSt\./gi,
+    /\bal\./gi,
+    /\bVol\./gi,
+    /\bNo\./gi,
+    /\bpp\./gi,
+    /\b[A-Z]\./g
+  ];
+
+  const masks = [];
+  abbreviations.forEach((regex) => {
+    t = t.replace(regex, match => {
+      const token = `___ABBR_MASK_${masks.length}___`;
+      masks.push({ token, original: match });
+      return token;
+    });
+  });
+
+  const parts = t.split(/(?<=[.!?])\s+/);
+
+  return parts.map(sentence => {
+    let s = sentence.trim();
+    masks.forEach(({ token, original }) => {
+      s = s.replaceAll(token, original);
+    });
+    return s;
+  }).filter(s => s && s.length >= 10 && clean(s));
+}
+
 async function loadNotes(forceAI = false) {
   const targetTopic = S.subTopic ? `${S.q} ${S.subTopic}` : S.q;
   const cacheKey = `notes::${targetTopic.toLowerCase().trim()}`;
@@ -2027,25 +2158,39 @@ async function loadNotes(forceAI = false) {
 
   if (!forceAI) {
     try {
-      const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(targetTopic)}&gsrlimit=1&prop=extracts|info&inprop=url&explaintext=1&exchars=4500&format=json&origin=*`;
-      const r = await fetch(url);
-      const j = await r.json();
-      if (j && j.query && j.query.pages) {
-        const p = Object.values(j.query.pages)[0];
-        if (p.extract && p.extract.length > 250) {
-          const sents = p.extract.replace(/\n+/g, ' ').split(/(?<=[.!?])\s+/).filter(clean);
-          if (sents.length >= 3) {
-            S.notes = {
-              title: p.title,
-              url: p.fullurl,
-              sents,
-              raw: p.extract,
-              aiGenerated: false
-            };
-            S.notesLoading = false;
-            if (S.tab === 'notes') renderNotesTab();
-            return;
-          }
+      const primaryTerm = (S.subTopic ? `${S.q} ${S.subTopic}` : S.q).trim();
+      const fetchWikiPages = async (term) => {
+        const url = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(term)}&gsrlimit=3&redirects=1&prop=extracts|info&inprop=url&explaintext=1&exchars=4500&format=json&origin=*`;
+        const r = await fetch(url);
+        const j = await r.json();
+        if (j && j.query && j.query.pages) {
+          const pages = Object.values(j.query.pages);
+          // Pick first page that is NOT a disambiguation page (does not contain "may refer to:")
+          const validPage = pages.find(p => p.extract && p.extract.length > 250 && !p.extract.toLowerCase().includes('may refer to:'));
+          if (validPage) return validPage;
+        }
+        return null;
+      };
+
+      let page = await fetchWikiPages(primaryTerm);
+      // Fallback to qb() only if primary pure query returned no non-disambiguation article
+      if (!page && S.cat && S.cat !== 'All') {
+        page = await fetchWikiPages(qb());
+      }
+
+      if (page) {
+        const sents = splitIntoSentences(page.extract);
+        if (sents.length >= 3) {
+          S.notes = {
+            title: page.title,
+            url: page.fullurl,
+            sents,
+            raw: page.extract,
+            aiGenerated: false
+          };
+          S.notesLoading = false;
+          if (S.tab === 'notes') renderNotesTab();
+          return;
         }
       }
     } catch (e) {}
@@ -2064,13 +2209,9 @@ async function generateDeepAINotes(topic, subTopic) {
   activeNotesAbortController = new AbortController();
   const signal = activeNotesAbortController.signal;
 
-  // 1. Fetch Parallel RAG Context in ≤1.2 seconds
   let ragContext = '';
-  try {
-    ragContext = await fetchAcademicRAGContext(topic, 1200);
-  } catch(e) {}
+  let accumulated = '';
 
-  // 2. Master Professor System Prompt for Notes
   const prompt = `Write comprehensive, textbook-grade study notes for: "${topic}".
 Include:
 1. Executive Overview & Intuition
@@ -2079,54 +2220,76 @@ Include:
 4. 2 Solved Exam-Level Problems with steps and verification
 5. Common Exam Pitfalls to Avoid.`;
 
-  const systemPrompt = `You are GyanSetu Genius AI, an elite academic textbook author and competitive exam coach created by Sudhanshu Khetan.
+  try {
+    // 1. Fetch Parallel RAG Context in ≤1.2 seconds
+    try {
+      ragContext = await fetchAcademicRAGContext(topic, 1200);
+    } catch(e) {}
+
+    const systemPrompt = `You are GyanSetu Genius AI, an elite academic textbook author and competitive exam coach created by Sudhanshu Khetan.
 Topic Context: ${topic} (${subTopic})
 Generate comprehensive, university-grade study notes with deep mathematical rigor and step-by-step proofs.
 ${ragContext ? `\n[LIVE VERIFIED ACADEMIC CONTEXT]\n${ragContext}\n` : ''}`;
 
-  let firstTokenReceived = false;
-  const timeoutId = setTimeout(() => {
-    if (!firstTokenReceived) {
-      if (activeNotesAbortController) activeNotesAbortController.abort('fast_timeout');
-    }
-  }, 5000);
-
-  let accumulated = '';
-  const noteModel = (aiConfig.modelMode === 'genius') ? 'openai-large' : 'openai-fast';
-
-  try {
-    await executePollinationsStream(noteModel, [
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: prompt }
-    ], signal, (chunk) => {
+    let firstTokenReceived = false;
+    const timeoutId = setTimeout(() => {
       if (!firstTokenReceived) {
-        firstTokenReceived = true;
-        clearTimeout(timeoutId);
+        if (activeNotesAbortController) activeNotesAbortController.abort('fast_timeout');
       }
-      accumulated += chunk;
-      S.notesStreamingText = accumulated;
-      renderNotesStreamingLive();
-    });
-  } catch (err) {
-    clearTimeout(timeoutId);
-    if (signal.reason === 'user_stop') {
-      // User stopped: finalize gathered text
-    } else {
+    }, 5000);
+
+    const noteModel = (aiConfig.modelMode === 'genius') ? 'openai-large' : 'openai-fast';
+
+    try {
+      await executePollinationsStream(noteModel, [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: prompt }
+      ], signal, (chunk) => {
+        if (!firstTokenReceived) {
+          firstTokenReceived = true;
+          clearTimeout(timeoutId);
+        }
+        accumulated += chunk;
+        S.notesStreamingText = accumulated;
+        renderNotesStreamingLive();
+      });
+      clearTimeout(timeoutId);
+    } catch (err) {
+      clearTimeout(timeoutId);
+      if (signal.reason !== 'user_stop') {
+        // Clean Direct GET Fallback
+        try {
+          const cleanGetUrl = `https://text.pollinations.ai/${encodeURIComponent(prompt)}?model=openai-fast&seed=42`;
+          const gRes = await fetch(cleanGetUrl, { signal });
+          if (gRes.ok) {
+            const gText = await gRes.text();
+            if (gText && gText.trim() && !gText.includes('<!DOCTYPE') && !gText.includes('<html')) {
+              accumulated = gText.trim();
+            }
+          }
+        } catch(gErr) {}
+
+        if (!accumulated.trim()) {
+          accumulated = generateLocalStructuredNotes(topic, subTopic, ragContext);
+        }
+      }
+    }
+  } catch (outerErr) {
+    if (!accumulated.trim()) {
       accumulated = generateLocalStructuredNotes(topic, subTopic, ragContext);
     }
+  } finally {
+    S.notesLoading = false;
+    activeNotesAbortController = null;
+
+    if (!accumulated.trim()) {
+      accumulated = generateLocalStructuredNotes(topic, subTopic, ragContext);
+    }
+
+    AICache.set(cacheKey, accumulated);
+    applyNotesData(topic, accumulated, true);
+    showNotification('Deep AI study notes ready!');
   }
-
-  clearTimeout(timeoutId);
-  S.notesLoading = false;
-  activeNotesAbortController = null;
-
-  if (!accumulated.trim()) {
-    accumulated = generateLocalStructuredNotes(topic, subTopic, ragContext);
-  }
-
-  AICache.set(cacheKey, accumulated);
-  applyNotesData(topic, accumulated, true);
-  showNotification('Deep AI study notes ready!');
 }
 
 function renderNotesStreamingLive() {
@@ -2137,7 +2300,7 @@ function renderNotesStreamingLive() {
 }
 
 function applyNotesData(topic, rawText, isAI) {
-  const sents = rawText.replace(/\n+/g, ' ').split(/(?<=[.!?])\s+/).filter(clean);
+  const sents = splitIntoSentences(rawText);
   S.notes = {
     title: `${topic} (${isAI ? 'Deep AI Academic Notes' : 'Wikipedia'})`,
     url: `https://en.wikipedia.org/w/index.php?search=${encodeURIComponent(topic)}`,
@@ -2561,26 +2724,116 @@ async function loadReddit() {
   const R = S.rd;
   if (R.busy || R.live === false || (R.live && !R.after)) return;
   R.busy = true;
+
+  let redditSuccess = false;
+
+  // 1. Attempt Reddit search with 3.5-second timeout
   try {
+    const redditController = new AbortController();
+    const timer = setTimeout(() => redditController.abort(), 3500);
     const u = `https://www.reddit.com/r/${REDDIT_SUBS}/search.json?q=${qb()}&restrict_sr=1&include_over_18=false&nsfw=0&limit=9&raw_json=1${R.after ? '&after=' + R.after : ''}`;
-    const res = await fetch(u);
-    const j = await res.json();
-    if (j && j.data && j.data.children) {
-      R.items.push(...j.data.children.map(c => c.data)
-        .filter(d => !d.over_18 && clean(d.title) && clean(d.url) && clean(d.subreddit))
-        .map(d => ({
-          b: 'r/' + d.subreddit,
-          t: d.title,
-          s: `▲ ${d.score} upvotes · ${d.num_comments} discussion comments`,
-          url: 'https://www.reddit.com' + d.permalink,
-          tag: d.score > 200 ? '[Megathread]' : (d.num_comments > 15 ? '[Solved]' : '[Discussion]'),
-          snippet: d.selftext ? d.selftext.slice(0, 120) + '…' : ''
-        })));
-      R.after = j.data.after;
-      R.live = true;
+    const res = await fetch(u, { signal: redditController.signal });
+    clearTimeout(timer);
+    if (res.ok) {
+      const j = await res.json();
+      if (j && j.data && j.data.children && j.data.children.length > 0) {
+        const fetched = j.data.children.map(c => c.data)
+          .filter(d => !d.over_18 && clean(d.title) && clean(d.url) && clean(d.subreddit))
+          .map(d => ({
+            b: 'r/' + d.subreddit,
+            t: d.title,
+            s: `▲ ${d.score} upvotes · ${d.num_comments} discussion comments`,
+            url: 'https://www.reddit.com' + d.permalink,
+            tag: d.score > 200 ? '[Megathread]' : (d.num_comments > 15 ? '[Solved]' : '[Discussion]'),
+            snippet: d.selftext ? d.selftext.slice(0, 120) + '…' : ''
+          }));
+        if (fetched.length > 0) {
+          R.items.push(...fetched);
+          R.after = j.data.after;
+          R.live = true;
+          R.liveSource = 'REDDIT';
+          redditSuccess = true;
+        }
+      }
     }
-  } catch (e) {
-    if (R.live === null) R.live = false;
+  } catch (e) {}
+
+  // 2. If Reddit fails or is blocked on Vercel: Live StackExchange + HackerNews Algolia Fallback
+  if (!redditSuccess && !R.items.length) {
+    try {
+      const fallbackController = new AbortController();
+      const fbTimer = setTimeout(() => fallbackController.abort(), 4000);
+
+      let seSite = 'stackoverflow';
+      const cat = (S.cat || '').toLowerCase();
+      if (cat.includes('math')) seSite = 'math';
+      else if (cat.includes('physics')) seSite = 'physics';
+      else if (cat.includes('chem')) seSite = 'chemistry';
+      else if (cat.includes('bio')) seSite = 'biology';
+      else if (cat.includes('eng')) seSite = 'engineering';
+      else if (cat.includes('econ')) seSite = 'economics';
+
+      const sePromise = (async () => {
+        try {
+          const url = `https://api.stackexchange.com/2.3/search/advanced?order=desc&sort=relevance&q=${encodeURIComponent(S.q)}&site=${seSite}&filter=default`;
+          const r = await fetch(url, { signal: fallbackController.signal });
+          if (!r.ok) return [];
+          const j = await r.json();
+          if (j && j.items && j.items.length) {
+            return j.items.slice(0, 4).map(d => {
+              const cleanTitle = (d.title || '').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+              return {
+                b: `${seSite}.stackexchange`,
+                t: cleanTitle,
+                s: `▲ ${d.score || 0} votes · ${d.answer_count || 0} answers${d.is_answered ? ' (Solved ✓)' : ''}`,
+                url: d.link,
+                tag: d.is_answered ? '[Solved]' : '[Q&A]',
+                snippet: d.tags ? `Tags: ${d.tags.slice(0, 3).join(', ')}` : 'Live Peer Academic Solution'
+              };
+            });
+          }
+        } catch(err) {}
+        return [];
+      })();
+
+      const hnPromise = (async () => {
+        try {
+          const url = `https://hn.algolia.com/api/v1/search?query=${encodeURIComponent(S.q)}&tags=story&hitsPerPage=4`;
+          const r = await fetch(url, { signal: fallbackController.signal });
+          if (!r.ok) return [];
+          const j = await r.json();
+          if (j && j.hits && j.hits.length) {
+            return j.hits.map(h => ({
+              b: 'Hacker News',
+              t: h.title,
+              s: `▲ ${h.points || 0} points · ${h.num_comments || 0} comments`,
+              url: `https://news.ycombinator.com/item?id=${h.objectID}`,
+              tag: (h.points || 0) > 100 ? '[Top Discussion]' : '[Discussion]',
+              snippet: h.url ? `Discussion on ${h.url.slice(0, 45)}...` : 'Academic & Technical peer dialogue'
+            }));
+          }
+        } catch(err) {}
+        return [];
+      })();
+
+      const [seResults, hnResults] = await Promise.allSettled([sePromise, hnPromise]);
+      clearTimeout(fbTimer);
+
+      const combined = [
+        ...(seResults.status === 'fulfilled' ? seResults.value : []),
+        ...(hnResults.status === 'fulfilled' ? hnResults.value : [])
+      ].filter(item => clean(item.t) && clean(item.url));
+
+      if (combined.length) {
+        R.items.push(...combined);
+        R.live = true;
+        R.liveSource = 'COMMUNITY (SE + HN)';
+      }
+    } catch(err) {}
+  }
+
+  if (R.live === null && !R.items.length) {
+    R.live = false;
   }
   R.busy = false;
   if (S.tab === 'videos') renderVideosTab();
@@ -3135,7 +3388,7 @@ function renderVideosTab() {
           <div>
             <h3 class="font-bold text-base flex items-center gap-2">
               <span>💬 Academic Discussions &amp; Peer Threads</span>
-              ${R.live ? '<span class="bg bg-succ text-[10px]">LIVE REDDIT</span>' : '<span class="bg text-[10px]">SEARCH QUERIES</span>'}
+              ${R.live ? `<span class="bg bg-succ text-[10px]">${esc(R.liveSource ? 'LIVE ' + R.liveSource : 'LIVE COMMUNITY')}</span>` : '<span class="bg text-[10px]">SEARCH QUERIES</span>'}
             </h3>
             <div class="mu text-xs">Verified conceptual questions, resource megathreads, and university solutions.</div>
           </div>
@@ -3555,7 +3808,7 @@ function openConcern() {
       $('#ce').textContent = 'Select at least one resource type.';
       return;
     }
-    if (BLOCK.test(det) && f.get('cat') !== 'Report inappropriate/non-study content') {
+    if (isBlockedContent(det) && f.get('cat') !== 'Report inappropriate/non-study content') {
       $('#ce').textContent = 'Access Denied: This platform is strictly restricted to academic and educational study topics.';
       return;
     }
