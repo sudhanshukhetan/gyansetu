@@ -115,6 +115,13 @@ input:focus,select:focus,textarea:focus{border-color:var(--ac);box-shadow:0 0 0 
 a.card{display:block;padding:1.15rem;transition:all .15s;border-radius:16px;text-decoration:none;color:inherit}
 a.card:hover{transform:translateY(-3px);border-color:var(--ac);box-shadow:0 12px 30px -10px rgba(109,74,255,.45)}
 .warn{background:var(--wb);color:var(--wa);border:1px solid var(--wa);border-radius:12px;padding:1rem}
+.syllabus-subject-card{background:var(--card);border:1px solid var(--bd);border-radius:16px;transition:all .2s ease;cursor:pointer}
+.syllabus-subject-card:hover{border-color:var(--ac);transform:translateY(-2px);box-shadow:0 10px 25px -8px rgba(109,74,255,.25)}
+.syllabus-subject-card.active{border-color:var(--ac);background:linear-gradient(145deg,var(--card),var(--card-sub));box-shadow:0 0 0 2px var(--ac)}
+.syllabus-topic-pill{display:inline-flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.45rem .85rem;font-size:.82rem;border-radius:10px;border:1px solid var(--bd);background:var(--card);color:var(--tx);transition:all .15s ease;cursor:pointer;text-align:left;width:100%}
+.syllabus-topic-pill:hover{border-color:var(--ac);background:var(--ac2);color:var(--ac);transform:translateY(-1px)}
+.syllabus-topic-pill .arrow{opacity:.4;transition:all .15s ease}
+.syllabus-topic-pill:hover .arrow{opacity:1;transform:translateX(2px);color:var(--ac)}
 .scroll-x{overflow-x:auto;scrollbar-width:thin}
 .scroll-x::-webkit-scrollbar{height:5px}
 .scroll-x::-webkit-scrollbar-thumb{background:var(--bd);border-radius:4px}
@@ -378,6 +385,11 @@ header{backdrop-filter:blur(12px)}
         <span>✨ AI Tutor</span>
       </button>
 
+      <!-- Syllabus Explorer Button -->
+      <button class="btn2 btn-sm text-xs flex items-center gap-1.5" onclick="openSyllabusModal()" title="Explore Structured Academic Syllabus">
+        <span>📚 Syllabus Explorer</span>
+      </button>
+
       <!-- Saved Library Button -->
       <button class="btn2 btn-sm text-xs" onclick="openSavedLibrary()" title="View Bookmarks & Notes">
         <span>☆ Saved</span> <span id="libBadge" class="bg font-mono">0</span>
@@ -412,6 +424,15 @@ header{backdrop-filter:blur(12px)}
 
   <!-- Primary Category Chips -->
   <div id="cats" class="noprint flex gap-2 mt-3 scroll-x pb-1"></div>
+
+  <!-- Browse Syllabus / Topics Bar -->
+  <div class="flex items-center justify-between gap-2 mt-2 px-1 flex-wrap noprint">
+    <button type="button" class="btn2 btn-sm text-xs py-1 px-3 flex items-center gap-1.5 border-indigo-500/30 hover:border-indigo-500 font-semibold text-indigo-400" onclick="openSyllabusModal()">
+      <span>📚 Browse Syllabus / Topics</span>
+      <span class="text-[10px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.5 rounded font-mono">6 Subjects · 150+ Topics</span>
+    </button>
+    <span class="text-xs mu hidden sm:inline">Explore curated university curricula across Mathematics, Physics, Chemistry, CS, DSA &amp; Economics</span>
+  </div>
 
   <!-- Precision Lecture & Resource Targeter Bar (Granular Filter Bar) -->
   <div id="targeterBar" class="hidden c p-3.5 mt-3.5 noprint border-indigo-500/20 shadow-sm">
@@ -533,6 +554,26 @@ header{backdrop-filter:blur(12px)}
       <button class="chip" onclick="quickSearch('Organic Chemistry')">Organic Chemistry</button>
       <button class="chip" onclick="quickSearch('Machine Learning')">Machine Learning</button>
       <button class="chip" onclick="quickSearch('Microeconomics')">Microeconomics</button>
+    </div>
+
+    <!-- Interactive Structured Syllabus & Topic Directory Section -->
+    <div class="mt-8 text-left c p-5 sm:p-6 border-indigo-500/20 shadow-md">
+      <div class="flex items-center justify-between gap-3 flex-wrap pb-3.5 border-b bd">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-xl border border-indigo-500/20">📚</div>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-bold flex items-center gap-2">
+              <span>Structured Syllabus &amp; Topic Explorer</span>
+              <span class="bg text-[10px] uppercase tracking-wider font-bold">Subject Tree</span>
+            </h2>
+            <p class="mu text-xs sm:text-sm mt-0.5">Explore standard university &amp; competitive exam syllabi. Click any topic to launch instant precision lecture search &amp; deep notes.</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" class="btn2 btn-sm text-xs py-1 px-2.5" onclick="openSyllabusModal()">⛶ Fullscreen Explorer</button>
+        </div>
+      </div>
+      <div id="homeSyllabusContent" class="mt-4"></div>
     </div>
 
     <!-- Feature Pillars -->
@@ -849,6 +890,28 @@ header{backdrop-filter:blur(12px)}
   </div>
 </div>
 
+<!-- Structured Syllabus & Topic Explorer Modal -->
+<div id="syllabusModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-black/75 backdrop-blur-sm" onclick="if(event.target.id==='syllabusModal') closeSyllabusModal()">
+  <div class="c w-full max-w-5xl max-h-[92vh] flex flex-col rounded-2xl shadow-2xl border border-indigo-500/30 overflow-hidden" onclick="event.stopPropagation()">
+    <!-- Modal Header -->
+    <div class="p-4 sm:p-5 border-b bd flex items-center justify-between gap-3 bg-slate-900/40 flex-shrink-0">
+      <div class="flex items-center gap-2.5">
+        <span class="text-2xl">📚</span>
+        <div>
+          <h2 class="text-lg sm:text-xl font-bold flex items-center gap-2">
+            <span>Structured Syllabus &amp; Topic Explorer</span>
+            <span class="bg text-[10px] uppercase tracking-wider font-bold">Academic Directory</span>
+          </h2>
+          <p class="mu text-xs">Standard university &amp; competitive curricula across 6 core disciplines. Click any topic to search.</p>
+        </div>
+      </div>
+      <button onclick="closeSyllabusModal()" aria-label="Close" class="w-8 h-8 rounded-lg flex items-center justify-center mu hover:text-tx hover:bg-slate-800 transition-colors text-lg">✕</button>
+    </div>
+    <!-- Modal Body -->
+    <div id="syllabusModalContent" class="overflow-y-auto p-4 sm:p-6 flex-1"></div>
+  </div>
+</div>
+
 <!-- Footer with Author Credits and Copyright -->
 <footer class="noprint max-w-7xl mx-auto px-4 pb-10 pt-6 text-center text-xs sm:text-sm mu border-t bd mt-12">
   <div class="flex flex-wrap items-center justify-between gap-3">
@@ -898,7 +961,8 @@ const TABS = [
   ['lectures', '🎓 Specific Lectures'],
   ['courses', '📚 Complete Courses'],
   ['videos', '▶️ Community & Videos'],
-  ['quiz', '⚡ Flashcards & Quiz']
+  ['quiz', '⚡ Flashcards & Quiz'],
+  ['syllabus', '🧭 Syllabus Directory']
 ];
 
 /* --------------------------------------------------------------------------
@@ -983,6 +1047,616 @@ const SYLLABUS_BANK = {
 };
 
 /* --------------------------------------------------------------------------
+   3.1 STRUCTURED ACADEMIC SYLLABUS TREE & TOPIC DIRECTORY
+   -------------------------------------------------------------------------- */
+const ACADEMIC_SYLLABUS_TREE = [
+  {
+    id: 'math',
+    name: 'Mathematics',
+    icon: '📐',
+    tagline: 'Higher Secondary, Engineering & University Pure Mathematics',
+    stats: '4 Major Divisions · 26 Standard Chapters',
+    sections: [
+      {
+        title: 'Algebra',
+        icon: '🔢',
+        desc: 'Polynomials, linear systems, combinatorics & sequences',
+        topics: [
+          'Matrices & Determinants',
+          'Complex Numbers & De Moivre Theorem',
+          'Permutations & Combinations',
+          'Binomial Theorem & Expansions',
+          'Arithmetic, Geometric & Harmonic Progressions',
+          'Quadratic Equations & Polynomial Roots',
+          'Mathematical Induction & Series Summation'
+        ]
+      },
+      {
+        title: 'Calculus',
+        icon: '∫',
+        desc: 'Differential calculus, integral forms & rate processes',
+        topics: [
+          'Limits, Continuity & Differentiability',
+          'Derivatives & Applications of Derivatives',
+          'Definite Integrals & Fundamental Theorem',
+          'Indefinite Integration & Techniques',
+          'Differential Equations (First & Second Order)',
+          'Area Under Curves & Numerical Quadrature',
+          'Multivariable Calculus & Partial Derivatives'
+        ]
+      },
+      {
+        title: 'Coordinate Geometry & Vectors',
+        icon: '📈',
+        desc: 'Analytic spatial curves, vectors & geometry',
+        topics: [
+          'Straight Lines & Pair of Lines',
+          'Circles & System of Circles',
+          'Conic Sections (Parabola, Ellipse, Hyperbola)',
+          'Vector Algebra (Dot & Cross Products)',
+          'Three-Dimensional Geometry (Planes & Lines in Space)'
+        ]
+      },
+      {
+        title: 'Trigonometry & Probability',
+        icon: '🎲',
+        desc: 'Trigonometric identities, distributions & stochastic models',
+        topics: [
+          'Trigonometric Functions & Identities',
+          'Trigonometric Equations & General Solutions',
+          'Inverse Trigonometric Functions',
+          'Descriptive Statistics & Standard Deviation',
+          'Probability Axioms & Bayes Theorem',
+          'Random Variables & Probability Distributions'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'physics',
+    name: 'Physics',
+    icon: '⚛️',
+    tagline: 'Classical Mechanics, Electrodynamics, Modern & Thermal Physics',
+    stats: '4 Divisions · 28 Core Modules',
+    sections: [
+      {
+        title: 'Classical Mechanics & Dynamics',
+        icon: '🎯',
+        desc: 'Kinematics, Newtonian conservation laws & rotation',
+        topics: [
+          'Kinematics (1D, 2D Motion & Projectiles)',
+          'Newton Laws of Motion & Friction',
+          'Work, Energy & Conservative Forces',
+          'Rotational Dynamics & Moment of Inertia',
+          'Universal Gravitation & Kepler Laws',
+          'Center of Mass, Linear Momentum & Collisions',
+          'Simple Harmonic Motion & Oscillations',
+          'Fluid Mechanics, Surface Tension & Viscosity'
+        ]
+      },
+      {
+        title: 'Electromagnetism & Circuits',
+        icon: '⚡',
+        desc: 'Electrostatics, magnetic effects, induction & AC systems',
+        topics: [
+          'Electrostatics, Coulomb Law & Potential',
+          'Gauss Law & Electric Flux',
+          'Capacitance & Dielectric Polarization',
+          'Current Electricity & Kirchhoff Laws',
+          'Magnetic Effects of Current & Biot-Savart Law',
+          'Electromagnetic Induction & Faraday Law',
+          'Alternating Current (AC) & Resonance RLC Circuits',
+          'Maxwell Equations & Electromagnetic Waves'
+        ]
+      },
+      {
+        title: 'Thermodynamics & Wave Motion',
+        icon: '🔥',
+        desc: 'Kinetic theory, state transitions, entropy & acoustics',
+        topics: [
+          'Thermal Expansion & Calorimetry',
+          'Kinetic Theory of Ideal Gases',
+          'First Law of Thermodynamics & PV Diagrams',
+          'Second Law of Thermodynamics, Entropy & Carnot Engine',
+          'Wave Motion & Superposition Principle',
+          'Sound Waves, Doppler Effect & Standing Waves'
+        ]
+      },
+      {
+        title: 'Optics & Modern Physics',
+        icon: '🔬',
+        desc: 'Wave optics, quantum photons, atomic spectra & semiconductors',
+        topics: [
+          'Ray Optics & Optical Instruments',
+          'Wave Optics (Interference, Young Double Slit & Diffraction)',
+          'Photoelectric Effect & Photon Energy',
+          'Bohr Atomic Model & Hydrogen Spectrum',
+          'Nuclear Physics, Binding Energy & Radioactivity',
+          'Semiconductor Diodes, Transistors & Logic Gates'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'chemistry',
+    name: 'Chemistry',
+    icon: '🧪',
+    tagline: 'Physical, Organic, Inorganic & Analytical Chemical Sciences',
+    stats: '4 Divisions · 26 Specialized Modules',
+    sections: [
+      {
+        title: 'Physical Chemistry',
+        icon: '⚖️',
+        desc: 'Stoichiometry, thermodynamics, kinetics & equilibrium',
+        topics: [
+          'Mole Concept & Stoichiometry',
+          'Atomic Structure & Quantum Numbers',
+          'Chemical Thermodynamics & Gibbs Free Energy',
+          'Chemical Equilibrium & Le Chatelier Principle',
+          'Ionic Equilibrium, pH & Buffer Solutions',
+          'Electrochemistry & Nernst Equation',
+          'Chemical Kinetics & Rate Laws',
+          'Solutions & Colligative Properties'
+        ]
+      },
+      {
+        title: 'Organic Chemistry',
+        icon: '⬡',
+        desc: 'Reaction mechanisms, functional groups & synthesis',
+        topics: [
+          'General Organic Chemistry (Resonance & Inductive Effects)',
+          'Organic Reaction Mechanisms (SN1, SN2, E1, E2)',
+          'Hydrocarbons (Alkanes, Alkenes, Alkynes)',
+          'Haloalkanes & Haloarenes',
+          'Alcohols, Phenols & Ethers',
+          'Aldehydes, Ketones & Carboxylic Acids',
+          'Amines & Diazonium Salts',
+          'Biomolecules (Carbohydrates, Amino Acids, DNA/RNA)'
+        ]
+      },
+      {
+        title: 'Inorganic Chemistry',
+        icon: '💎',
+        desc: 'Periodic trends, bonding theories & transition metals',
+        topics: [
+          'Periodic Classification & Periodic Trends',
+          'Chemical Bonding & Molecular Orbital Theory (MOT)',
+          'Coordination Compounds & Crystal Field Theory (CFT)',
+          's-Block & p-Block Elements Chemistry',
+          'd-Block and f-Block Transition Elements',
+          'Metallurgy & Metal Extraction Principles'
+        ]
+      },
+      {
+        title: 'Analytical & Environmental Chemistry',
+        icon: '🌿',
+        desc: 'Qualitative analysis, titrations & green chemistry',
+        topics: [
+          'Qualitative Salt Analysis & Cation Separation',
+          'Volumetric & Redox Titrations',
+          'Spectroscopy Fundamentals (UV-Vis, IR & NMR)',
+          'Environmental Chemistry & Atmospheric Chemistry'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'cs',
+    name: 'Computer Science & Engineering',
+    icon: '💻',
+    tagline: 'Core Systems, Architecture, Networking, Databases & Theory',
+    stats: '5 Divisions · 25 Core Systems Modules',
+    sections: [
+      {
+        title: 'Operating Systems',
+        icon: '⚙️',
+        desc: 'Concurrency, process scheduling, memory & file systems',
+        topics: [
+          'Process Management & CPU Scheduling Algorithms',
+          'Threads, Concurrency & Synchronization (Semaphores, Mutex)',
+          'Deadlock Handling (Banker Algorithm & Prevention)',
+          'Virtual Memory Management (Paging & Page Replacement)',
+          'File System Implementation & Disk Scheduling'
+        ]
+      },
+      {
+        title: 'Database Management Systems (DBMS)',
+        icon: '🗄️',
+        desc: 'Relational algebra, SQL, normal forms & transaction ACID',
+        topics: [
+          'Relational Model & Relational Algebra',
+          'SQL Queries (Complex Joins, Subqueries & Aggregates)',
+          'Database Normalization (1NF, 2NF, 3NF, BCNF)',
+          'Transactions, ACID Properties & Serializability',
+          'Concurrency Control (2-Phase Locking) & B+ Trees'
+        ]
+      },
+      {
+        title: 'Computer Networks',
+        icon: '🌐',
+        desc: 'Layered protocol architecture, routing & network security',
+        topics: [
+          'OSI Reference Model & TCP/IP Protocol Architecture',
+          'Application Layer (HTTP, DNS, TLS & Web Architecture)',
+          'Transport Layer (TCP Flow Control, Congestion Control & UDP)',
+          'Network Layer (IPv4/IPv6 Addressing & Routing Protocols)',
+          'Data Link Layer (Ethernet, CSMA/CD, Framing & CRC)',
+          'Network Security & Cryptography (RSA, AES, Hash Functions)'
+        ]
+      },
+      {
+        title: 'Computer Organization & Architecture',
+        icon: '🔌',
+        desc: 'Instruction pipelines, memory hierarchy & processor logic',
+        topics: [
+          'Instruction Set Architecture (RISC vs CISC)',
+          'Instruction Pipelining & Hazard Resolution',
+          'Cache Memory Mapping & Cache Coherence',
+          'Digital Logic Design & Arithmetic Logic Units (ALU)',
+          'Interrupt Handling & DMA Interfacing'
+        ]
+      },
+      {
+        title: 'Theory of Computation & Compilers',
+        icon: '📑',
+        desc: 'Formal automata, grammars, Turing machines & parsing',
+        topics: [
+          'Finite Automata (DFA, NFA) & Regular Expressions',
+          'Context-Free Grammars & Pushdown Automata',
+          'Turing Machines, Computability & Halting Problem',
+          'Lexical Analysis & Syntax Analysis (LL, LR Parsers)',
+          'Intermediate Code Generation & Compiler Optimizations'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'dsa',
+    name: 'Data Structures & Algorithms',
+    icon: '⚡',
+    tagline: 'Algorithmic Problem Solving, Linear/Non-Linear DS & Dynamic Programming',
+    stats: '4 Divisions · 26 Algorithmic Topics',
+    sections: [
+      {
+        title: 'Linear Data Structures',
+        icon: '📋',
+        desc: 'Contiguous arrays, pointer chains, stacks & sliding windows',
+        topics: [
+          'Arrays & Two-Pointer Searching Techniques',
+          'Strings, String Hashing & Pattern Matching (KMP)',
+          'Singly, Doubly & Circular Linked Lists',
+          'Stacks & Expression Evaluation (Infix/Postfix Parsing)',
+          'Queues, Circular Queues & Monotonic Deques',
+          'Sliding Window & Two-Pointer Optimization'
+        ]
+      },
+      {
+        title: 'Non-Linear Hierarchical Structures',
+        icon: '🌳',
+        desc: 'Binary trees, balanced search trees, heaps & tries',
+        topics: [
+          'Binary Tree Traversals (Inorder, Preorder, Postorder & Level-Order)',
+          'Binary Search Trees (BST Insertion, Deletion & LCA)',
+          'Self-Balancing Trees (AVL Trees & Red-Black Trees)',
+          'Heaps & Priority Queues (Min-Heap, Max-Heap & HeapSort)',
+          'Tries (Prefix Trees) & Auto-Complete Optimization',
+          'Disjoint Set Union (Union-Find with Path Compression)'
+        ]
+      },
+      {
+        title: 'Graph Algorithms & Traversal',
+        icon: '🕸️',
+        desc: 'Shortest paths, minimum spanning trees & network flows',
+        topics: [
+          'Graph Representation (Adjacency Matrix & Adjacency List)',
+          'Breadth-First Search (BFS) & Depth-First Search (DFS)',
+          'Shortest Paths (Dijkstra, Bellman-Ford & Floyd-Warshall)',
+          'Minimum Spanning Tree (Kruskal & Prim Algorithms)',
+          'Topological Sort & Cycle Detection in Directed Graphs',
+          'Strongly Connected Components (Tarjan & Kosaraju Algorithms)'
+        ]
+      },
+      {
+        title: 'Algorithmic Design Paradigms & Dynamic Programming',
+        icon: '🧩',
+        desc: 'Divide-and-conquer, greedy heuristics & state memoization',
+        topics: [
+          'Asymptotic Complexity & Recurrence Relations (Master Theorem)',
+          'Divide and Conquer (MergeSort, QuickSort & Binary Search)',
+          'Greedy Algorithms (Interval Scheduling & Huffman Coding)',
+          '1D Dynamic Programming (Climbing Stairs, House Robber)',
+          '2D Dynamic Programming (0/1 Knapsack, LCS, Edit Distance)',
+          'Bitmask Dynamic Programming & Combinatorial States',
+          'Backtracking & State Space Tree Search (N-Queens)'
+        ]
+      }
+    ]
+  },
+  {
+    id: 'economics',
+    name: 'Economics',
+    icon: '📈',
+    tagline: 'Microeconomics, Macroeconomics, Econometrics & Global Trade',
+    stats: '4 Divisions · 24 Academic Topics',
+    sections: [
+      {
+        title: 'Microeconomic Theory',
+        icon: '📊',
+        desc: 'Utility optimization, market structures & game theory',
+        topics: [
+          'Supply, Demand & Market Equilibrium Analysis',
+          'Price Elasticity of Demand & Supply',
+          'Consumer Choice & Indifference Curve Analysis',
+          'Production Functions & Cost Minimization (Isoquants)',
+          'Perfect Competition & Short/Long-Run Profit Maximization',
+          'Monopoly, Monopsony & Price Discrimination',
+          'Oligopoly Models (Cournot, Bertrand, Stackelberg)',
+          'Game Theory, Payoff Matrices & Nash Equilibrium'
+        ]
+      },
+      {
+        title: 'Macroeconomic Analysis & Policy',
+        icon: '🏦',
+        desc: 'National accounting, monetary transmission & fiscal policy',
+        topics: [
+          'National Income Accounting (GDP, Real vs Nominal, GVA)',
+          'Aggregate Demand & Aggregate Supply (AD-AS Framework)',
+          'IS-LM Model & Goods-Money Market Equilibrium',
+          'Inflation, Unemployment & the Phillips Curve',
+          'Central Banking, Monetary Policy & Interest Rate Transmission',
+          'Fiscal Policy, Government Multipliers & Sovereign Debt',
+          'Economic Growth Models (Solow-Swan Steady State Model)'
+        ]
+      },
+      {
+        title: 'Econometrics & Quantitative Methods',
+        icon: '📐',
+        desc: 'Regression modeling, hypothesis testing & time series',
+        topics: [
+          'Simple & Multiple Linear Regression (OLS Method)',
+          'Gauss-Markov Assumptions & BLUE Estimators',
+          'Hypothesis Testing in Econometrics (t-tests, F-tests, p-values)',
+          'Econometric Violations (Heteroskedasticity & Multicollinearity)',
+          'Time Series Analysis (Stationarity, Unit Roots & ARIMA)'
+        ]
+      },
+      {
+        title: 'International Economics & Public Finance',
+        icon: '🌍',
+        desc: 'Trade models, exchange rates & public sector economics',
+        topics: [
+          'Comparative Advantage & Heckscher-Ohlin Trade Theory',
+          'Tariffs, Quotas, Subsidies & Trade Protectionism',
+          'Foreign Exchange Markets & Balance of Payments (BOP)',
+          'Public Goods, Externalities & Pigouvian Taxation'
+        ]
+      }
+    ]
+  }
+];
+
+let currentSyllabusSubject = 'math';
+let currentSyllabusSearch = '';
+
+function openSyllabusModal(subjectId) {
+  if (subjectId) currentSyllabusSubject = subjectId;
+  const m = $('#syllabusModal');
+  if (!m) return;
+  renderSyllabusExplorer('syllabusModalContent', currentSyllabusSubject, currentSyllabusSearch);
+  m.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeSyllabusModal() {
+  const m = $('#syllabusModal');
+  if (m) m.classList.add('hidden');
+  document.body.style.overflow = '';
+}
+
+function toggleSyllabusExplorer() {
+  const m = $('#syllabusModal');
+  if (m && !m.classList.contains('hidden')) {
+    closeSyllabusModal();
+  } else {
+    openSyllabusModal();
+  }
+}
+
+function selectSyllabusSubject(containerId, subjectId) {
+  currentSyllabusSubject = subjectId;
+  currentSyllabusSearch = '';
+  renderSyllabusExplorer(containerId, subjectId, '');
+}
+
+function onSyllabusSearch(query, containerId) {
+  currentSyllabusSearch = query;
+  renderSyllabusExplorer(containerId, currentSyllabusSubject, query);
+}
+
+function selectSyllabusTopic(topic) {
+  closeSyllabusModal();
+  $('#q').value = topic;
+  run(topic);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function renderSyllabusExplorer(containerId, activeSubId, filterQuery = '') {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const currentSub = ACADEMIC_SYLLABUS_TREE.find(s => s.id === activeSubId) || ACADEMIC_SYLLABUS_TREE[0];
+  const query = (filterQuery || '').trim().toLowerCase();
+
+  let html = '';
+
+  // 1. Controls Bar: Subject selector tabs & Quick live search
+  html += `
+    <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 mb-5 pb-3 border-b bd">
+      <div class="flex gap-1.5 scroll-x pb-1 flex-1 items-center">
+        ${ACADEMIC_SYLLABUS_TREE.map(sub => {
+          const isActive = !query && sub.id === currentSub.id;
+          const totalChapters = sub.sections.reduce((acc, sec) => acc + sec.topics.length, 0);
+          return `
+            <button type="button" class="chip ${isActive ? 'on font-bold' : ''} text-xs py-1.5 px-3 flex items-center gap-1.5 flex-shrink-0" onclick="selectSyllabusSubject('${containerId}', '${sub.id}')">
+              <span>${sub.icon}</span>
+              <span>${sub.name}</span>
+              <span class="text-[10px] opacity-75 font-mono">(${totalChapters})</span>
+            </button>
+          `;
+        }).join('')}
+      </div>
+      <div class="w-full md:w-80 flex-shrink-0">
+        <div class="relative">
+          <input type="text" value="${esc(filterQuery)}" placeholder="🔍 Search any topic (e.g., 'integral', 'sort', 'newton')..." class="text-xs py-2 pl-8 pr-3 rounded-xl border bd bg-[var(--card-sub)]" oninput="onSyllabusSearch(this.value, '${containerId}')">
+          <svg class="w-3.5 h-3.5 absolute left-2.5 top-2.5 mu" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          ${filterQuery ? `<button type="button" class="absolute right-2.5 top-2 text-xs mu hover:text-tx" onclick="onSyllabusSearch('', '${containerId}')">✕</button>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+
+  // 2. Body: Either search filter results OR active subject breakdown
+  if (query) {
+    // Search across all subjects, sections, and topics
+    const matchingTopics = [];
+    ACADEMIC_SYLLABUS_TREE.forEach(sub => {
+      sub.sections.forEach(sec => {
+        sec.topics.forEach(t => {
+          if (t.toLowerCase().includes(query) || sec.title.toLowerCase().includes(query) || sub.name.toLowerCase().includes(query)) {
+            matchingTopics.push({
+              subjectName: sub.name,
+              subjectIcon: sub.icon,
+              sectionTitle: sec.title,
+              topic: t
+            });
+          }
+        });
+      });
+    });
+
+    html += `
+      <div class="mb-4 flex items-center justify-between text-xs">
+        <span class="font-semibold text-indigo-400">Search Results for "${esc(filterQuery)}":</span>
+        <span class="mu">${matchingTopics.length} topic${matchingTopics.length === 1 ? '' : 's'} found</span>
+      </div>
+    `;
+
+    if (matchingTopics.length === 0) {
+      html += `
+        <div class="text-center py-8 c-sub p-6 rounded-2xl">
+          <div class="text-3xl mb-2">🔍</div>
+          <h3 class="font-bold text-sm">No standard syllabus topics matched "${esc(filterQuery)}"</h3>
+          <p class="mu text-xs mt-1 max-w-md mx-auto">Try typing broad academic terms like "algebra", "calculus", "circuit", "reaction", "algorithm", or "supply".</p>
+          <button type="button" class="btn2 btn-sm text-xs mt-3" onclick="onSyllabusSearch('', '${containerId}')">Clear Search</button>
+        </div>
+      `;
+    } else {
+      html += `
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+          ${matchingTopics.map(item => `
+            <button type="button" class="syllabus-topic-pill p-3 flex flex-col items-start gap-1 justify-between" onclick="selectSyllabusTopic('${esc(item.topic)}')">
+              <div class="w-full flex items-center justify-between gap-2">
+                <span class="font-semibold text-xs leading-snug text-left">${esc(item.topic)}</span>
+                <span class="arrow text-xs text-indigo-400 flex-shrink-0">→</span>
+              </div>
+              <div class="flex items-center gap-1.5 text-[10px] mu font-medium">
+                <span>${item.subjectIcon} ${item.subjectName}</span>
+                <span>•</span>
+                <span class="truncate">${item.sectionTitle}</span>
+              </div>
+            </button>
+          `).join('')}
+        </div>
+      `;
+    }
+  } else {
+    // Display Active Subject Banner
+    const totalSubjectTopics = currentSub.sections.reduce((acc, sec) => acc + sec.topics.length, 0);
+
+    html += `
+      <!-- Subject Header Banner -->
+      <div class="p-4 rounded-2xl border bd c-sub mb-5 flex items-center justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center text-2xl flex-shrink-0 border border-indigo-500/20">
+            ${currentSub.icon}
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-base sm:text-lg font-bold">${currentSub.name}</h3>
+              <span class="bg text-[10px] font-mono">${currentSub.sections.length} Major Divisions</span>
+            </div>
+            <p class="mu text-xs mt-0.5">${currentSub.tagline}</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-xs px-2.5 py-1 rounded-lg bg-[var(--card)] border bd font-mono font-semibold text-indigo-400">${totalSubjectTopics} Total Chapters</span>
+        </div>
+      </div>
+
+      <!-- Categorized Sub-Sections Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        ${currentSub.sections.map(sec => `
+          <div class="c p-4 rounded-2xl border bd flex flex-col justify-between hover:border-indigo-500/40 transition-colors">
+            <div>
+              <div class="flex items-center justify-between gap-2 pb-2.5 border-b bd mb-3">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">${sec.icon}</span>
+                  <div>
+                    <h4 class="font-bold text-xs sm:text-sm">${sec.title}</h4>
+                    <p class="mu text-[11px] leading-tight">${sec.desc}</p>
+                  </div>
+                </div>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-[var(--card-sub)] border bd font-mono font-bold mu flex-shrink-0">
+                  ${sec.topics.length} topics
+                </span>
+              </div>
+
+              <!-- Clickable Topic Pills -->
+              <div class="grid grid-cols-1 gap-1.5">
+                ${sec.topics.map(t => `
+                  <button type="button" class="syllabus-topic-pill" onclick="selectSyllabusTopic('${esc(t)}')">
+                    <span class="truncate">${esc(t)}</span>
+                    <span class="arrow text-xs text-indigo-400">→</span>
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  container.innerHTML = html;
+}
+
+function renderSyllabusTab() {
+  const v = $('#view');
+  v.innerHTML = `
+    <div class="c p-5 sm:p-6 border-indigo-500/20 shadow-sm animate-in">
+      <div class="flex items-center justify-between gap-3 flex-wrap pb-3.5 border-b bd mb-5">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-xl border border-indigo-500/20">🧭</div>
+          <div>
+            <h2 class="text-xl sm:text-2xl font-bold flex items-center gap-2">
+              <span>Structured Syllabus &amp; Topic Explorer</span>
+              <span class="bg text-[10px] uppercase tracking-wider font-bold">Curriculum Tree</span>
+            </h2>
+            <p class="mu text-xs sm:text-sm mt-0.5">Explore comprehensive university and competitive exam curricula across 6 core academic disciplines. Click any topic to launch instant precision lecture search &amp; deep notes.</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" class="btn2 btn-sm text-xs py-1 px-2.5" onclick="openSyllabusModal()">⛶ Fullscreen Explorer</button>
+        </div>
+      </div>
+      <div id="tabSyllabusContent"></div>
+    </div>
+  `;
+  renderSyllabusExplorer('tabSyllabusContent', currentSyllabusSubject, currentSyllabusSearch);
+}
+
+
+/* --------------------------------------------------------------------------
    4. RICH STEM FORMULA BANK
    -------------------------------------------------------------------------- */
 const STEM_FORMULA_BANK = {
@@ -1064,6 +1738,7 @@ const libStore = {
   set(v) {
     try { localStorage.setItem('gyansetu_library', JSON.stringify(v)); } catch (e) {}
     updateLibBadge();
+renderSyllabusExplorer('homeSyllabusContent', 'math');
   },
   add(item) {
     const list = this.get();
@@ -2754,6 +3429,21 @@ async function buildSyllabusSubTopics(topic) {
   const norm = topic.toLowerCase().trim();
   let subTopics = [];
 
+  // Check structured academic tree first
+  for (const sub of ACADEMIC_SYLLABUS_TREE) {
+    if (norm.includes(sub.id) || norm.includes(sub.name.toLowerCase()) || sub.name.toLowerCase().includes(norm)) {
+      subTopics = sub.sections.flatMap(sec => sec.topics);
+      break;
+    }
+    for (const sec of sub.sections) {
+      if (norm.includes(sec.title.toLowerCase()) || sec.title.toLowerCase().includes(norm)) {
+        subTopics = [...sec.topics];
+        break;
+      }
+    }
+    if (subTopics.length > 0) break;
+  }
+
   for (const key in SYLLABUS_BANK) {
     if (norm.includes(key) || key.includes(norm)) {
       subTopics = [...SYLLABUS_BANK[key]];
@@ -3301,6 +3991,7 @@ function render() {
   else if (S.tab === 'courses') renderCoursesTab();
   else if (S.tab === 'videos') renderVideosTab();
   else if (S.tab === 'quiz') renderQuizTab();
+  else if (S.tab === 'syllabus') renderSyllabusTab();
 }
 
 /* --------------------------------------------------------------------------
