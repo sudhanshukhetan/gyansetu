@@ -15,8 +15,10 @@
 
 ### 1. 🤖 Working In-App AI Academic Tutor ("GyanSetu AI Assistant")
 - **Live Slide-Over AI Drawer:** Interactive, distraction-free academic chat assistant accessible via floating badge or header.
-- **Zero-Key Public LLM Architecture:** Direct connection to high-performance, CORS-enabled public LLM endpoints with zero configuration required.
-- **Custom API Key Support:** Optional settings to supply a personal Google Gemini API key or OpenAI/Groq API key.
+- **Serverless AI Proxy Architecture:** Safe, server-side streaming via Vercel Functions (`api/chat.js`) protecting API keys, model identities, rate limits (20 req/min/IP), and system prompts.
+- **Dual Intelligence Modes:**
+  - `⚡ GyanSetu AI · Turbo`: Sub-0.5s streaming for fast summaries, quick definitions, and study roadmaps.
+  - `🧠 GyanSetu AI · Deep`: Rigorous derivations, exam numerical proofs, and automated parallel fact retrieval across Wikipedia and OpenAlex.
 - **Context-Aware Syllabus Assistance:** Automatically injects currently searched topic, active sub-topic, and current notes as context.
 - **One-Click Academic Action Chips:**
   - *"Explain this topic like I'm 15 with intuitive analogies"*
@@ -66,10 +68,11 @@
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Getting Started & Deployment
 
+### Local Static Use
 Simply open `index.html` in any modern web browser (Chrome, Safari, Firefox, Edge).  
-No installation, npm builds, or server dependencies required!
+All core features, fallback encyclopedias, 3D flashcards, quizzes, timers, and offline academic synthesis work right out of the box with zero npm builds or server dependencies.
 
 ```bash
 # Clone the repository
@@ -81,6 +84,15 @@ cd gyansetu
 # Open in browser (macOS)
 open index.html
 ```
+
+### Full Serverless Deployment (Vercel)
+To enable live AI streaming and real-time YouTube lecture caching with zero browser-side API key exposure:
+
+1. Push your repository to GitHub / Vercel.
+2. In your Vercel Project Dashboard → **Settings** → **Environment Variables**, configure:
+   - `GEMINI_API_KEY`: Your Google AI Studio API key (powers `/api/chat`)
+   - `YOUTUBE_API_KEY` *(Optional)*: YouTube Data API v3 key (powers cached lecture queries via `/api/yt`)
+3. Redeploy. GyanSetu will automatically route AI interactions through the secure Edge proxy with prompt injection guards and rate limits.
 
 ---
 
