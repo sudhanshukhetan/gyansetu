@@ -1,5 +1,14 @@
 // /ai-client.js — GyanSetu AI Client (3-Tier Resilient Architecture)
 
+function sanitizeClientOutput(text) {
+  if (!text || typeof text !== 'string') return '';
+  let s = text;
+  s = s.replace(/\b(?:gpt-4o(?:-mini)?|gpt-3\.5-turbo|gpt-4|gemini-(?:2\.5-flash|1\.5-pro|1\.5-flash|pro|flash)|claude-(?:3|3\.5|opus|sonnet)|openai-large|openai-fast|openai|pollinations(?:\.ai)?|chatgpt)\b/gi, 'GyanSetu AI');
+  s = s.replace(/\b(?:localStorage|corsproxy|noembed|ytInitialData|vercel|github|api\s*key)\b/gi, 'GyanSetu Platform');
+  s = s.replace(/as an ai developed by openai|as a language model trained by google|i am gemini|i am chatgpt|trained by openai/gi, 'I am the GyanSetu Academic Tutor');
+  return s;
+}
+
 async function processSSEStream(body, onToken, signal) {
   const rd = body.getReader();
   const dec = new TextDecoder();
@@ -21,7 +30,7 @@ async function processSSEStream(body, onToken, signal) {
           const token = (parsed && typeof parsed.t === 'string') 
             ? parsed.t 
             : (parsed.choices?.[0]?.delta?.content || '');
-          if (token) onToken(token);
+          if (token) onToken(sanitizeClientOutput(token));
         } catch {}
       }
     }
@@ -41,6 +50,7 @@ async function askAI(messages, mode, onToken, signal, context) {
       const r = await fetch('https://generativelanguage.googleapis.com/v1beta/openai/chat/completions', {
         method: 'POST',
         signal,
+        cache: 'no-store',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${customKey}`
@@ -67,6 +77,7 @@ async function askAI(messages, mode, onToken, signal, context) {
     const r = await fetch('/api/chat', {
       method: 'POST',
       signal,
+      cache: 'no-store',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         messages,
@@ -80,7 +91,7 @@ async function askAI(messages, mode, onToken, signal, context) {
       if (!contentType.includes('text/event-stream')) {
         const j = await r.json().catch(() => ({}));
         const content = j.choices?.[0]?.message?.content || j.error || '';
-        if (content) onToken(content);
+        if (content) onToken(sanitizeClientOutput(content));
         return;
       }
       await processSSEStream(r.body, onToken, signal);
@@ -96,12 +107,13 @@ async function askAI(messages, mode, onToken, signal, context) {
     const directRes = await fetch('https://text.pollinations.ai/openai', {
       method: 'POST',
       signal,
+      cache: 'no-store',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         messages,
         model: isDeep ? 'openai-large' : 'openai',
         stream: true,
-        seed: Math.floor(Math.random() * 100000)
+        seed: Math.floor(Math.random() * 10000000)
       })
     });
     if (directRes.ok && directRes.body) {
@@ -112,7 +124,7 @@ async function askAI(messages, mode, onToken, signal, context) {
     if (signal && signal.aborted) return;
   }
 
-  // Tier 3: Real-Time Wikipedia + OpenAlex RAG + Built-In STEM Solver
+  // Tier 3: Real-Time Local STEM Academic Tutor Solver
   if (typeof generateLocalAcademicTutorResponse === 'function') {
     const lastUserMsg = [...messages].reverse().find(m => m && m.role === 'user')?.content || '';
     const ragContext = typeof fetchAcademicRAGContext === 'function' ? await fetchAcademicRAGContext(currentCtx || 'Science', 1000).catch(() => '') : '';
